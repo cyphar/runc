@@ -335,7 +335,7 @@ func join(c *configs.Cgroup, subsystem string, pid int) (string, error) {
 }
 
 func joinCpu(c *configs.Cgroup, pid int) error {
-	_, err := getSubsystemPath(c, "cpu")
+	_, err := join(c, "cpu", pid)
 	if err != nil && !cgroups.IsNotFound(err) {
 		return err
 	}
@@ -494,11 +494,17 @@ func setKernelMemory(c *configs.Cgroup) error {
 		return err
 	}
 
+	if cgroup.Resources.KernelMemory > 0 {
+		if err := writeFile(path, "memory.kmem.limit_in_bytes", strconv.FormatInt(cgroup.Resources.KernelMemory, 10)); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func joinMemory(c *configs.Cgroup, pid int) error {
-	_, err := getSubsystemPath(c, "memory")
+	_, err := join(c, "memory", pid)
 	if err != nil && !cgroups.IsNotFound(err) {
 		return err
 	}
@@ -523,7 +529,7 @@ func joinCpuset(c *configs.Cgroup, pid int) error {
 // expects device path instead of major minor numbers, which is also confusing
 // for users. So we use fs work around for now.
 func joinBlkio(c *configs.Cgroup, pid int) error {
-	_, err := getSubsystemPath(c, "blkio")
+	_, err := join(c, "blkio", pid)
 	if err != nil {
 		return err
 	}
