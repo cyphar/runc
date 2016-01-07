@@ -109,25 +109,13 @@ func restoreContainer(context *cli.Context, spec *specs.LinuxSpec, config *confi
 
 	// ensure that the container is always removed if we were the process
 	// that created it.
-	defer func() {
-		if err != nil {
-			return
-		}
-		status, err := container.Status()
-		if err != nil {
-			logrus.Error(err)
-		}
-		if status != libcontainer.Checkpointed {
-			if err := container.Destroy(); err != nil {
-				logrus.Error(err)
-			}
-			if err := os.RemoveAll(options.ImagesDirectory); err != nil {
-				logrus.Error(err)
-			}
-		}
-	}()
-	process := &libcontainer.Process{}
-	tty, err := newTty(spec.Process.Terminal, process, rootuid)
+	defer destroy(container)
+	process := &libcontainer.Process{
+		Stdin:  os.Stdin,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	}
+	tty, err := newTty(spec.Process.Terminal, process, rootuid, "")
 	if err != nil {
 		return -1, err
 	}
