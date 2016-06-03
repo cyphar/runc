@@ -77,12 +77,29 @@ func (l *linuxStandardInit) Init(s chan os.Signal) error {
 	}
 
 	label.Init()
-	// InitializeMountNamespace() can be executed only for a new mount namespace
+
+	// prepareRootfs() can be executed only for a new mount namespace
 	if l.config.Config.Namespaces.Contains(configs.NEWNS) {
-		if err := setupRootfs(l.config.Config, console, l.pipe); err != nil {
+		if err := prepareRootfs(l.config.Config); err != nil {
 			return err
 		}
 	}
+
+	// Signal the parent to run the pre-start hooks.
+	// The hooks are run after the mounts are setup, but before we switch to the new
+	// root, so that the old root is still available in the hooks for any mount
+	// manipulations.
+	if err := syncParentHooks(l.pipe); err != nil {
+		return err
+	}
+
+	// Finish the rootfs setup.
+	if l.config.Config.Namespaces.Contains(configs.NEWNS) {
+		if err := finalizeRootfs(l.config.Config, console); err != nil {
+			return err
+		}
+	}
+
 	if hostname := l.config.Config.Hostname; hostname != "" {
 		if err := syscall.Sethostname([]byte(hostname)); err != nil {
 			return err
