@@ -61,6 +61,7 @@ func prepareRootfs(config *configs.Config) (err error) {
 			}
 		}
 	}
+
 	if setupDev {
 		if err := createDevices(config); err != nil {
 			return newSystemErrorWithCause(err, "creating device nodes")

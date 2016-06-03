@@ -38,18 +38,16 @@ struct nsenter_config {
 	char     *gidmap;
 	int      gidmap_len;
 	uint8_t  is_setgroup;
-	int      consolefd;
 };
 
 // list of known message types we want to send to bootstrap program
 // These are defined in libcontainer/message_linux.go
 #define INIT_MSG	    62000
 #define CLONE_FLAGS_ATTR    27281
-#define CONSOLE_PATH_ATTR   27282
-#define NS_PATHS_ATTR	    27283
-#define UIDMAP_ATTR	    27284
-#define GIDMAP_ATTR	    27285
-#define SETGROUP_ATTR	    27286
+#define NS_PATHS_ATTR	    27282
+#define UIDMAP_ATTR	    27283
+#define GIDMAP_ATTR	    27284
+#define SETGROUP_ATTR	    27285
 
 // Use raw setns syscall for versions of glibc that don't include it
 // (namely glibc-2.12)
@@ -277,7 +275,6 @@ static struct nsenter_config process_nl_attributes(int pipenum, char *data, int 
 	int			payload_len;
 	int			start       = 0;
 
-	config.consolefd = -1;
 	while (start < data_size) {
 		nlattr = (struct nlattr *)(data + start);
 		start += NLA_HDRLEN;
@@ -285,15 +282,6 @@ static struct nsenter_config process_nl_attributes(int pipenum, char *data, int 
 
 		if (nlattr->nla_type == CLONE_FLAGS_ATTR) {
 			config.cloneflags = readint32(data + start);
-		} else if (nlattr->nla_type == CONSOLE_PATH_ATTR) {
-			// get the console path before setns because it may
-			// change mnt namespace
-			config.consolefd = open(data + start, O_RDWR);
-			if (config.consolefd < 0) {
-				pr_perror("Failed to open console %s",
-					  data + start);
-				exit(1);
-			}
 		} else if (nlattr->nla_type == NS_PATHS_ATTR) {
 			// if custom namespaces are required, open all
 			// descriptors and perform setns on them
@@ -412,7 +400,6 @@ void nsexec(void)
 	if (setjmp(env) == 1) {
 		// Child
 		uint8_t s = 0;
-		int	consolefd = config.consolefd;
 
 		// close the writing side of pipe
 		close(syncpipe[1]);
@@ -437,29 +424,10 @@ void nsexec(void)
 			pr_perror("setgid failed");
 			exit(1);
 		}
-    
+
 		if (setgroups(0, NULL) == -1) {
 			pr_perror("setgroups failed");
 			exit(1);
-		}
-
-		if (consolefd != -1) {
-			if (ioctl(consolefd, TIOCSCTTY, 0) == -1) {
-				pr_perror("ioctl TIOCSCTTY failed");
-				exit(1);
-			}
-			if (dup3(consolefd, STDIN_FILENO, 0) != STDIN_FILENO) {
-				pr_perror("Failed to dup stdin");
-				exit(1);
-			}
-			if (dup3(consolefd, STDOUT_FILENO, 0) != STDOUT_FILENO) {
-				pr_perror("Failed to dup stdout");
-				exit(1);
-			}
-			if (dup3(consolefd, STDERR_FILENO, 0) != STDERR_FILENO) {
-				pr_perror("Failed to dup stderr");
-				exit(1);
-			}
 		}
 
 		// Finish executing, let the Go runtime take over.
