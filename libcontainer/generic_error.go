@@ -19,6 +19,9 @@ type syncType uint8
 //
 // [  child  ] <-> [   parent   ]
 //
+// procConsole --> [create console fd]
+//             <-- procFd [with sendmsg(fd)]
+//
 // procHooks   --> [run hooks]
 //             <-- procResume
 //
@@ -30,6 +33,8 @@ const (
 	procRun
 	procHooks
 	procResume
+	procConsole
+	procFd
 )
 
 type syncT struct {

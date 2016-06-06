@@ -147,6 +147,27 @@ func finalizeNamespace(config *initConfig) error {
 	return nil
 }
 
+func setupConsole(pipe io.ReadWriter, config *initConfig) error {
+	return nil
+
+	// Ask parent for console to be set up.
+	if err := writeSync(pipe, procConsole); err != nil {
+		return err
+	}
+
+	// Wait for parent to provide the requested fds.
+	if err := readSync(pipe, procFd); err != nil {
+		return err
+	}
+
+	// The parent will send 3 fds over the unix socket used for communication,
+	// in the auxilliary data. The order shall be {stdin, stdout, stderr}.
+	// open file). The order will be {stdin, stdout, stderr}.
+
+	//fd := pipe.(*os.File).Fd()
+	return nil
+}
+
 // syncParentReady sends to the given pipe a JSON payload which indicates that
 // the init is ready to Exec the child process. It then waits for the parent to
 // indicate that it is cleared to Exec.
