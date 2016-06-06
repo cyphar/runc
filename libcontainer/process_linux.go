@@ -312,7 +312,7 @@ loop:
 				}
 			}
 			// Sync with child.
-			if err := utils.WriteJSON(p.parentPipe, syncT{procRun}); err != nil {
+			if err := writeSync(p.parentPipe, procRun); err != nil {
 				return newSystemErrorWithCause(err, "reading syncT run type")
 			}
 			sentRun = true
@@ -332,7 +332,7 @@ loop:
 				}
 			}
 			// Sync with child.
-			if err := utils.WriteJSON(p.parentPipe, syncT{procResume}); err != nil {
+			if err := writeSync(p.parentPipe, procResume); err != nil {
 				return newSystemErrorWithCause(err, "reading syncT resume type")
 			}
 			sentResume = true
