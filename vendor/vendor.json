@@ -1,0 +1,125 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "USQFwXWz6tO69wtZdj3zZDB1MA4=",
+			"path": "github.com/Sirupsen/logrus",
+			"revision": "26709e2714106fb8ad40b773b711ebce25b78914",
+			"revisionTime": "2015-04-23T02:53:12Z"
+		},
+		{
+			"checksumSHA1": "9Db3Cx4Xt5zoHab2W6TEu1LphNU=",
+			"path": "github.com/coreos/go-systemd/activation",
+			"revision": "b4a58d95188dd092ae20072bac14cece0e67c388",
+			"revisionTime": "2015-11-04T19:42:51Z",
+			"version": "=v4",
+			"versionExact": "v4"
+		},
+		{
+			"checksumSHA1": "wMhhbz1LEETFmcoqU1MEJHL8D8U=",
+			"path": "github.com/coreos/go-systemd/dbus",
+			"revision": "b4a58d95188dd092ae20072bac14cece0e67c388",
+			"revisionTime": "2015-11-04T19:42:51Z",
+			"version": "=v4",
+			"versionExact": "v4"
+		},
+		{
+			"checksumSHA1": "8lB8neFQy9puAX5Hb9FhEbjozZQ=",
+			"path": "github.com/coreos/go-systemd/util",
+			"revision": "b4a58d95188dd092ae20072bac14cece0e67c388",
+			"revisionTime": "2015-11-04T19:42:51Z",
+			"version": "=v4",
+			"versionExact": "v4"
+		},
+		{
+			"checksumSHA1": "gIka/369kBaeQ7HShSrP/Xkpd8g=",
+			"path": "github.com/docker/docker/pkg/mount",
+			"revision": "0f5c9d301b9b1cca66b3ea0f9dec3b5317d3686d",
+			"revisionTime": "2015-07-21T17:49:42Z"
+		},
+		{
+			"checksumSHA1": "bJMNAfyrsCGRzKwVb/4JoSYjyaU=",
+			"path": "github.com/docker/docker/pkg/symlink",
+			"revision": "0f5c9d301b9b1cca66b3ea0f9dec3b5317d3686d",
+			"revisionTime": "2015-07-21T17:49:42Z"
+		},
+		{
+			"checksumSHA1": "TstwTbh6Mn4s/OWaqKEyXOJ4LNU=",
+			"path": "github.com/docker/docker/pkg/term",
+			"revision": "0f5c9d301b9b1cca66b3ea0f9dec3b5317d3686d",
+			"revisionTime": "2015-07-21T17:49:42Z"
+		},
+		{
+			"path": "github.com/docker/docker/pkg/term/winconsole",
+			"revision": "0f5c9d301b9b1cca66b3ea0f9dec3b5317d3686d"
+		},
+		{
+			"checksumSHA1": "92IcD5dqOhKQlYiMwlWsIV5t5SA=",
+			"path": "github.com/docker/go-units",
+			"revision": "9b001659dd36225e356b4467c465d732e745f53d",
+			"revisionTime": "2015-12-15T00:47:25Z",
+			"version": "=v0.1.0",
+			"versionExact": "v0.1.0"
+		},
+		{
+			"checksumSHA1": "QX/Sl1iGz9W6jaXdzpbFcd6fjas=",
+			"path": "github.com/godbus/dbus",
+			"revision": "c7fdd8b5cd55e87b4e1f4e372cdb1db61dd6c66f",
+			"revisionTime": "2015-11-05T17:54:53Z",
+			"version": "=v3",
+			"versionExact": "v3"
+		},
+		{
+			"checksumSHA1": "KCd6M0hchH4Ma3b3+OyY4kGBjkg=",
+			"path": "github.com/golang/protobuf/proto",
+			"revision": "f7137ae6b19afbfd61a94b746fda3b3fe0491874",
+			"revisionTime": "2015-03-16T21:40:00Z"
+		},
+		{
+			"checksumSHA1": "A4mb9nN49X1M5y0nMfaF5fZrmLU=",
+			"path": "github.com/opencontainers/runtime-spec/specs-go",
+			"revision": "06479209bdc0d4135911688c18157bd39bd99c22",
+			"revisionTime": "2016-06-03T19:15:30Z",
+			"version": "=v1.0.0-rc1",
+			"versionExact": "v1.0.0-rc1"
+		},
+		{
+			"checksumSHA1": "53flNVrVcVcF7HLtfQi/bYBr36k=",
+			"path": "github.com/seccomp/libseccomp-golang",
+			"revision": "60c9953736798c4a04e90d0f3da2f933d44fd4c4",
+			"revisionTime": "2015-11-21T01:38:11Z"
+		},
+		{
+			"checksumSHA1": "b7GCRCSXl4E7Ux0vOr3z9g3g5nE=",
+			"path": "github.com/syndtr/gocapability/capability",
+			"revision": "2c00daeb6c3b45114c80ac44119e7b8801fdd852",
+			"revisionTime": "2015-07-16T01:09:06Z"
+		},
+		{
+			"checksumSHA1": "AA29v7WFDYGHoK+NPArQ0rM33ws=",
+			"path": "github.com/urfave/cli",
+			"revision": "edb24d02aa3cea2319c33f2836d4a5133907fe4c",
+			"revisionTime": "2016-06-02T08:47:49Z"
+		},
+		{
+			"checksumSHA1": "BGpCBchrdshwh7sLBTvYRtXbd8o=",
+			"path": "github.com/vishvananda/netlink",
+			"revision": "1e2e08e8a2dcdacaae3f14ac44c5cfa31361f270",
+			"revisionTime": "2015-08-20T01:49:04Z"
+		},
+		{
+			"checksumSHA1": "3wwAlQOO6V/mZJXBgIQmTZMWi44=",
+			"path": "github.com/vishvananda/netlink/nl",
+			"revision": "7995ff5647a22cbf0dc41bf5c0e977bdb0d5c6b7",
+			"revisionTime": "2016-05-31T20:03:47Z"
+		},
+		{
+			"checksumSHA1": "zjfUA3qOv6grhBLpyJ+7EejXWQE=",
+			"path": "github.com/vishvananda/netns",
+			"revision": "8ba1072b58e0c2a240eb5f6120165c7776c3e7b8",
+			"revisionTime": "2016-04-30T05:37:23Z"
+		}
+	],
+	"rootPath": "runc"
+}
