@@ -5,6 +5,9 @@ import (
 	"os"
 	"syscall"
 	"unsafe"
+
+	"github.com/docker/docker/pkg/term"
+	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 // newConsole returns an initialized console that can be used within a container by copying bytes
@@ -101,6 +104,16 @@ func (c *linuxConsole) open(flag int) (*os.File, error) {
 		}
 	}
 	return os.NewFile(uintptr(r), c.slavePath), nil
+}
+
+// resize sets the size of the given console to the requested size.
+func (c *linuxConsole) resize(box specs.Box) error {
+	ws := term.Winsize{
+		Width:  uint16(box.Width),
+		Height: uint16(box.Height),
+	}
+	term.SetWinsize(c.master.Fd(), &ws)
+	return nil
 }
 
 func ioctl(fd uintptr, flag, data uintptr) error {

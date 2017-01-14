@@ -177,6 +177,10 @@ func setupConsole(pipe *os.File, config *initConfig, mount bool) error {
 		return fmt.Errorf("failed to cast console to *linuxConsole")
 	}
 
+	if err := linuxConsole.resize(config.Config.InitialConsoleSize); err != nil {
+		return err
+	}
+
 	// Mount the console inside our rootfs.
 	if mount {
 		if err := linuxConsole.mount(); err != nil {
