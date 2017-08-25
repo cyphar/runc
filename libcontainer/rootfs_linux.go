@@ -686,7 +686,15 @@ func readonlyPath(path string) error {
 		}
 		return err
 	}
-	return syscall.Mount(path, path, "", syscall.MS_BIND|syscall.MS_REMOUNT|syscall.MS_RDONLY|syscall.MS_REC, "")
+
+	statfs := syscall.Statfs_t{}
+	if err := syscall.Statfs(path, &statfs); err != nil {
+		return err
+	}
+
+	flags := statfs.Flags | syscall.MS_BIND | syscall.MS_REMOUNT | syscall.MS_RDONLY | syscall.MS_REC
+
+	return syscall.Mount(path, path, "", uintptr(flags), "")
 }
 
 // remountReadonly will remount an existing mount point and ensure that it is read-only.
