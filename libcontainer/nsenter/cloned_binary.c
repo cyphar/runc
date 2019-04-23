@@ -265,8 +265,6 @@ static int make_execfd(int *fdtype)
 	fd = memfd_create(RUNC_MEMFD_COMMENT, MFD_CLOEXEC | MFD_ALLOW_SEALING);
 	if (fd >= 0)
 		return fd;
-	if (errno != ENOSYS && errno != EINVAL)
-		goto error;
 
 #ifdef O_TMPFILE
 	/*
@@ -291,13 +289,7 @@ static int make_execfd(int *fdtype)
 
 		if (working_otmpfile)
 			return fd;
-
-		/* Pretend that we got EISDIR since O_TMPFILE failed. */
-		close(fd);
-		errno = EISDIR;
 	}
-	if (errno != EISDIR)
-		goto error;
 #endif /* defined(O_TMPFILE) */
 
 	/*
