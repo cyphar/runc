@@ -245,6 +245,47 @@ enum {
 #  endif
 #endif
 
+/*
+ * Some RHEL kernels have busted memfd_create(2) ports. In principle, this
+ * should serve as a smoke-test to check whether memfd_create(2) appears to
+ * work (for the most part). It's possible that some weirdness happens with
+ * execve which we don't detect, but there's not much we can do about that.
+ */
+static bool working_memfd_create(void)
+{
+	bool working = false;
+
+	int fd = memfd_create(RUNC_MEMFD_COMMENT, MFD_CLOEXEC | MFD_ALLOW_SEALING);
+	if (fd < 0)
+		return false;
+
+	/* Can we write to the fd? */
+	if (dprintf(fd, "Should work.\n") < 0)
+		goto out;
+
+	/* Can we add seals? */
+	if (fcntl(fd, F_ADD_SEALS, RUNC_MEMFD_SEALS) < 0)
+		goto out;
+
+	/* Does F_SEAL_WRITE work? */
+	if (dprintf(fd, "Should fail.\n") >= 0)
+		goto out;
+	/* Does F_SEAL_SHRINK work? */
+	if (ftruncate(fd, 0) >= 0)
+		goto out;
+	/* Does F_SEAL_GROW work? */
+	if (ftruncate(fd, 1024) >= 0)
+		goto out;
+	/* Does F_SEAL_SEAL work? */
+	if (fcntl(fd, F_ADD_SEALS, 0) >= 0)
+		goto out;
+
+	working = true;
+out:
+	close(fd);
+	return working;
+}
+
 static int make_execfd(int *fdtype)
 {
 	int fd = -1;
@@ -261,10 +302,12 @@ static int make_execfd(int *fdtype)
 	 * since it's easily detected thanks to sealing and also doesn't require
 	 * assumptions about STATEDIR.
 	 */
-	*fdtype = EFD_MEMFD;
-	fd = memfd_create(RUNC_MEMFD_COMMENT, MFD_CLOEXEC | MFD_ALLOW_SEALING);
-	if (fd >= 0)
-		return fd;
+	if (working_memfd_create()) {
+		*fdtype = EFD_MEMFD;
+		fd = memfd_create(RUNC_MEMFD_COMMENT, MFD_CLOEXEC | MFD_ALLOW_SEALING);
+		if (fd >= 0)
+			return fd;
+	}
 
 #ifdef O_TMPFILE
 	/*
