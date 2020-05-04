@@ -81,65 +81,59 @@ block-2:
         18: Exit
 block-3:
         19: JNEImm dst: r2 off: -1 imm: 2 <block-4>
-        20: JNEImm dst: r4 off: -1 imm: 5 <block-4>
-        21: JNEImm dst: r5 off: -1 imm: 1 <block-4>
+        20: JNEImm dst: r4 off: -1 imm: 1 <block-4>
+        21: JNEImm dst: r5 off: -1 imm: 9 <block-4>
         22: Mov32Imm dst: r0 imm: 1
         23: Exit
 block-4:
         24: JNEImm dst: r2 off: -1 imm: 2 <block-5>
         25: JNEImm dst: r4 off: -1 imm: 1 <block-5>
-        26: JNEImm dst: r5 off: -1 imm: 9 <block-5>
+        26: JNEImm dst: r5 off: -1 imm: 5 <block-5>
         27: Mov32Imm dst: r0 imm: 1
         28: Exit
 block-5:
         29: JNEImm dst: r2 off: -1 imm: 2 <block-6>
-        30: JNEImm dst: r4 off: -1 imm: 1 <block-6>
-        31: JNEImm dst: r5 off: -1 imm: 5 <block-6>
+        30: JNEImm dst: r4 off: -1 imm: 5 <block-6>
+        31: JNEImm dst: r5 off: -1 imm: 0 <block-6>
         32: Mov32Imm dst: r0 imm: 1
         33: Exit
 block-6:
         34: JNEImm dst: r2 off: -1 imm: 2 <block-7>
-        35: JNEImm dst: r4 off: -1 imm: 5 <block-7>
-        36: JNEImm dst: r5 off: -1 imm: 0 <block-7>
+        35: JNEImm dst: r4 off: -1 imm: 1 <block-7>
+        36: JNEImm dst: r5 off: -1 imm: 7 <block-7>
         37: Mov32Imm dst: r0 imm: 1
         38: Exit
 block-7:
         39: JNEImm dst: r2 off: -1 imm: 2 <block-8>
         40: JNEImm dst: r4 off: -1 imm: 1 <block-8>
-        41: JNEImm dst: r5 off: -1 imm: 7 <block-8>
+        41: JNEImm dst: r5 off: -1 imm: 8 <block-8>
         42: Mov32Imm dst: r0 imm: 1
         43: Exit
 block-8:
         44: JNEImm dst: r2 off: -1 imm: 2 <block-9>
         45: JNEImm dst: r4 off: -1 imm: 1 <block-9>
-        46: JNEImm dst: r5 off: -1 imm: 8 <block-9>
+        46: JNEImm dst: r5 off: -1 imm: 3 <block-9>
         47: Mov32Imm dst: r0 imm: 1
         48: Exit
 block-9:
-        49: JNEImm dst: r2 off: -1 imm: 2 <block-10>
-        50: JNEImm dst: r4 off: -1 imm: 1 <block-10>
-        51: JNEImm dst: r5 off: -1 imm: 3 <block-10>
-        52: Mov32Imm dst: r0 imm: 1
-        53: Exit
-block-10:
 // (b, wildcard, wildcard, m, true)
-        54: JNEImm dst: r2 off: -1 imm: 1 <block-11>
-        55: Mov32Reg dst: r1 src: r3
-        56: And32Imm dst: r1 imm: 1
-        57: JEqImm dst: r1 off: -1 imm: 0 <block-11>
-        58: Mov32Imm dst: r0 imm: 1
-        59: Exit
-block-11:
+        49: JNEImm dst: r2 off: -1 imm: 1 <block-10>
+        50: Mov32Reg dst: r1 src: r3
+        51: And32Imm dst: r1 imm: 1
+        52: JEqImm dst: r1 off: -1 imm: 0 <block-10>
+        53: Mov32Imm dst: r0 imm: 1
+        54: Exit
+block-10:
 // (c, wildcard, wildcard, m, true)
-        60: JNEImm dst: r2 off: -1 imm: 2 <block-12>
-        61: Mov32Reg dst: r1 src: r3
-        62: And32Imm dst: r1 imm: 1
-        63: JEqImm dst: r1 off: -1 imm: 0 <block-12>
-        64: Mov32Imm dst: r0 imm: 1
-        65: Exit
-block-12:
-        66: Mov32Imm dst: r0 imm: 0
-        67: Exit
+        55: JNEImm dst: r2 off: -1 imm: 2 <block-11>
+        56: Mov32Reg dst: r1 src: r3
+        57: And32Imm dst: r1 imm: 1
+        58: JEqImm dst: r1 off: -1 imm: 0 <block-11>
+        59: Mov32Imm dst: r0 imm: 1
+        60: Exit
+block-11:
+        61: Mov32Imm dst: r0 imm: 0
+        62: Exit
 `
 	testDeviceFilter(t, specconv.AllowedDevices, expected)
 }
