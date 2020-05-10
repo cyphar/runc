@@ -87,6 +87,12 @@ func (m *UnifiedManager) Apply(pid int) error {
 	properties = append(properties,
 		newProp("DefaultDependencies", false))
 
+	deviceProperties, err := generateDeviceProperties(c.Resources.Devices)
+	if err != nil {
+		return err
+	}
+	properties = append(properties, deviceProperties...)
+
 	if c.Resources.Memory != 0 {
 		properties = append(properties,
 			newProp("MemoryLimit", uint64(c.Resources.Memory)))
