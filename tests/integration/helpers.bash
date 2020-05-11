@@ -145,51 +145,65 @@ function fail() {
 # support it, the test is skipped with a message.
 function requires() {
 	for var in "$@"; do
+		local skip_me
 		case $var in
 		criu)
 			if [ ! -e "$CRIU" ]; then
-				skip "test requires ${var}"
+				skip_me=1
 			fi
 			;;
 		root)
 			if [ "$ROOTLESS" -ne 0 ]; then
-				skip "test requires ${var}"
+				skip_me=1
 			fi
 			;;
 		rootless)
 			if [ "$ROOTLESS" -eq 0 ]; then
-				skip "test requires ${var}"
+				skip_me=1
 			fi
 			;;
 		rootless_idmap)
 			if [[ "$ROOTLESS_FEATURES" != *"idmap"* ]]; then
-				skip "test requires ${var}"
+				skip_me=1
 			fi
 			;;
 		rootless_cgroup)
 			if [[ "$ROOTLESS_FEATURES" != *"cgroup"* ]]; then
-				skip "test requires ${var}"
+				skip_me=1
 			fi
 			;;
 		rootless_no_cgroup)
 			if [[ "$ROOTLESS_FEATURES" == *"cgroup"* ]]; then
-				skip "test requires ${var}"
+				skip_me=1
 			fi
 			;;
 		cgroups_kmem)
 			if [ ! -e "$KMEM" ]; then
-				skip "Test requires ${var}"
+				skip_me=1
 			fi
 			;;
 		cgroups_rt)
 			if [ ! -e "$RT_PERIOD" ]; then
-				skip "Test requires ${var}"
+				skip_me=1
+			fi
+			;;
+		systemd)
+			if [ -z "${RUNC_USE_SYSTEMD}" ]; then
+				skip_me=1
+			fi
+			;;
+		no_systemd)
+			if [ -n "${RUNC_USE_SYSTEMD}" ]; then
+				skip_me=1
 			fi
 			;;
 		*)
-			fail "BUG: Invalid requires ${var}."
+			fail "BUG: Invalid requires $var."
 			;;
 		esac
+		if [ -n "$skip_me" ]; then
+			skip "test requires $var"
+		fi
 	done
 }
 

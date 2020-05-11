@@ -12,8 +12,11 @@ function teardown() {
 }
 
 @test "runc pause and resume" {
-  # XXX: currently cgroups require root containers.
-  requires root
+  if [[ "$ROOTLESS" -ne 0 ]]
+  then
+    requires rootless_cgroup
+    set_cgroups_path "$BUSYBOX_BUNDLE"
+  fi
 
   # run busybox detached
   runc run -d --console-socket $CONSOLE_SOCKET test_busybox
@@ -37,8 +40,11 @@ function teardown() {
 }
 
 @test "runc pause and resume with nonexist container" {
-  # XXX: currently cgroups require root containers.
-  requires root
+  if [[ "$ROOTLESS" -ne 0 ]]
+  then
+    requires rootless_cgroup
+    set_cgroups_path "$BUSYBOX_BUNDLE"
+  fi
 
   # run test_busybox detached
   runc run -d --console-socket $CONSOLE_SOCKET test_busybox
