@@ -212,3 +212,7 @@ func (m *manager) Set(container *configs.Config) error {
 func (m *manager) GetCgroups() (*configs.Cgroup, error) {
 	return m.config, nil
 }
+
+func (m *manager) GetFreezerState() (configs.FreezerState, error) {
+	return getFreezer(m.dirPath)
+}

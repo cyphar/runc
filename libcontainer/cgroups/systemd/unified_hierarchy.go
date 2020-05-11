@@ -310,3 +310,11 @@ func (m *UnifiedManager) Set(container *configs.Config) error {
 func (m *UnifiedManager) GetCgroups() (*configs.Cgroup, error) {
 	return m.Cgroups, nil
 }
+
+func (m *UnifiedManager) GetFreezerState() (configs.FreezerState, error) {
+	fsMgr, err := m.fsManager()
+	if err != nil {
+		return configs.Undefined, err
+	}
+	return fsMgr.GetFreezerState()
+}

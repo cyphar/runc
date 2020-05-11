@@ -532,3 +532,15 @@ func isUnitExists(err error) bool {
 func (m *LegacyManager) GetCgroups() (*configs.Cgroup, error) {
 	return m.Cgroups, nil
 }
+
+func (m *LegacyManager) GetFreezerState() (configs.FreezerState, error) {
+	path, err := getSubsystemPath(m.Cgroups, "freezer")
+	if err != nil && !cgroups.IsNotFound(err) {
+		return configs.Undefined, err
+	}
+	freezer, err := legacySubsystems.Get("freezer")
+	if err != nil {
+		return configs.Undefined, err
+	}
+	return freezer.(*fs.FreezerGroup).GetState(path)
+}

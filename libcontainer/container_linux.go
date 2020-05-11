@@ -1812,27 +1812,11 @@ func (c *linuxContainer) runType() (Status, error) {
 }
 
 func (c *linuxContainer) isPaused() (bool, error) {
-	fcg := c.cgroupManager.GetPaths()["freezer"]
-	if fcg == "" {
-		// A container doesn't have a freezer cgroup
-		return false, nil
-	}
-	pausedState := "FROZEN"
-	filename := "freezer.state"
-	if cgroups.IsCgroup2UnifiedMode() {
-		filename = "cgroup.freeze"
-		pausedState = "1"
-	}
-
-	data, err := ioutil.ReadFile(filepath.Join(fcg, filename))
+	state, err := c.cgroupManager.GetFreezerState()
 	if err != nil {
-		// If freezer cgroup is not mounted, the container would just be not paused.
-		if os.IsNotExist(err) || err == syscall.ENODEV {
-			return false, nil
-		}
-		return false, newSystemErrorWithCause(err, "checking if container is paused")
+		return false, err
 	}
-	return bytes.Equal(bytes.TrimSpace(data), []byte(pausedState)), nil
+	return state == configs.Frozen, nil
 }
 
 func (c *linuxContainer) currentState() (*State, error) {
