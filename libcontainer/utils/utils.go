@@ -1,8 +1,11 @@
 package utils
 
 import (
+	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +17,20 @@ import (
 const (
 	exitSignalOffset = 128
 )
+
+// NativeEndian is the native byte order of the host system.
+var NativeEndian binary.ByteOrder
+
+func init() {
+	// Copied from <golang.org/x/net/internal/socket/sys.go>.
+	i := uint32(1)
+	b := (*[4]byte)(unsafe.Pointer(&i))
+	if b[0] == 1 {
+		NativeEndian = binary.LittleEndian
+	} else {
+		NativeEndian = binary.BigEndian
+	}
+}
 
 // ResolveRootfs ensures that the current working directory is
 // not a symlink and returns the absolute path to the rootfs
@@ -105,6 +122,28 @@ func Annotations(labels []string) (bundle string, userAnnotations map[string]str
 		}
 	}
 	return
+}
+
+// Like ioutil.TempFile but works inside a container context, depending on
+// kernel support.
+func RestrictedTempFile(pattern string) (_ *os.File, needsDelete bool, _ error) {
+	// First try the "obvious" version to see if it works.
+	if fh, err := ioutil.TempFile("", pattern); err == nil {
+		return fh, true, nil
+	}
+
+	// Try to make a memfd to avoid hitting the filesystem.
+	if fd, err := unix.MemfdCreate(pattern, 0); err == nil {
+		return os.NewFile(uintptr(fd), "memfd:"+pattern), false, nil
+	}
+
+	// Try O_TMPFILE in ".".
+	if fh, err := os.OpenFile(".", unix.O_TMPFILE|os.O_RDWR, 0600); err == nil {
+		return fh, false, nil
+	}
+
+	// Nothing left to try...
+	return nil, false, errors.New("could not create tmpfile")
 }
 
 func GetIntSize() int {
