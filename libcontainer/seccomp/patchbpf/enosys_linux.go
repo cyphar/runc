@@ -76,8 +76,8 @@ func isAllowAction(action configs.Action) bool {
 	}
 }
 
-func parseProgram(rdr io.Reader) ([]bpf.Instruction, error) {
-	var rawProgram []bpf.RawInstruction
+func parseProgram(rdr io.Reader) ([]bpf.RawInstruction, error) {
+	var program []bpf.RawInstruction
 loop:
 	for {
 		// Read the next instruction. We have to use NativeEndian because
@@ -96,28 +96,21 @@ loop:
 				return nil, errors.Wrap(err, "parsing instructions")
 			}
 		}
-		rawProgram = append(rawProgram, bpf.RawInstruction{
+		program = append(program, bpf.RawInstruction{
 			Op: insn.Code,
 			Jt: insn.Jt,
 			Jf: insn.Jf,
 			K:  insn.K,
 		})
 	}
-	program, ok := bpf.Disassemble(rawProgram)
-	if !ok {
-		return nil, errors.Errorf("could not disassemble all instructions")
-	}
 	return program, nil
 }
 
 func disassembleFilter(filter *libseccomp.ScmpFilter) ([]bpf.Instruction, error) {
 	// Store the original BPF in some scratch space.
-	bpfFile, needsDelete, err := utils.RestrictedTempFile(".runc-seccomp-filter")
+	bpfFile, err := utils.RestrictedTempFile(".runc-seccomp-filter")
 	if err != nil {
 		return nil, errors.Wrap(err, "creating scratch file")
-	}
-	if needsDelete {
-		defer os.Remove(bpfFile.Name())
 	}
 	defer bpfFile.Close()
 
@@ -127,10 +120,15 @@ func disassembleFilter(filter *libseccomp.ScmpFilter) ([]bpf.Instruction, error)
 	if _, err := bpfFile.Seek(0, os.SEEK_SET); err != nil {
 		return nil, errors.Wrap(err, "seeking to start of BPF buffer")
 	}
+
 	// Parse the instructions.
-	program, err := parseProgram(bpfFile)
+	rawProgram, err := parseProgram(bpfFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing generated BPF filter")
+	}
+	program, ok := bpf.Disassemble(rawProgram)
+	if !ok {
+		return nil, errors.Errorf("could not disassemble entire BPF filter")
 	}
 	return program, nil
 }
@@ -493,13 +491,13 @@ func generateEnosysStub(lastSyscalls lastSyscallMap) ([]bpf.Instruction, error) 
 	return programTail, nil
 }
 
-func assemble(program []bpf.Instruction) (*unix.SockFprog, error) {
+func assemble(program []bpf.Instruction) ([]unix.SockFilter, error) {
 	rawProgram, err := bpf.Assemble(program)
 	if err != nil {
 		return nil, errors.Wrap(err, "assembling program")
 	}
 
-	// Convert to []unix.SockFilter for unix.SockFprog.
+	// Convert to []unix.SockFilter for unix.SockFilter.
 	var filter []unix.SockFilter
 	for _, insn := range rawProgram {
 		filter = append(filter, unix.SockFilter{
@@ -509,10 +507,7 @@ func assemble(program []bpf.Instruction) (*unix.SockFprog, error) {
 			K:    insn.K,
 		})
 	}
-	return &unix.SockFprog{
-		Len:    uint16(len(filter)),
-		Filter: &filter[0],
-	}, nil
+	return filter, nil
 }
 
 func generatePatch(config *configs.Seccomp) ([]bpf.Instruction, error) {
@@ -533,7 +528,7 @@ func generatePatch(config *configs.Seccomp) ([]bpf.Instruction, error) {
 	return stubProgram, nil
 }
 
-func enosysPatchFilter(config *configs.Seccomp, filter *libseccomp.ScmpFilter) (*unix.SockFprog, error) {
+func enosysPatchFilter(config *configs.Seccomp, filter *libseccomp.ScmpFilter) ([]unix.SockFilter, error) {
 	program, err := disassembleFilter(filter)
 	if err != nil {
 		return nil, errors.Wrap(err, "disassembling original filter")
@@ -579,17 +574,22 @@ func filterFlags(filter *libseccomp.ScmpFilter) (flags uint, noNewPrivs bool, er
 	return
 }
 
-func sysSeccompSetFilter(flags uint, fprog *unix.SockFprog) (err error) {
+func sysSeccompSetFilter(flags uint, filter []unix.SockFilter) (err error) {
+	fprog := unix.SockFprog{
+		Len:    uint16(len(filter)),
+		Filter: &filter[0],
+	}
 	// If no seccomp flags were requested we can use the old-school prctl(2).
 	if flags == 0 {
 		err = unix.Prctl(unix.PR_SET_SECCOMP,
 			unix.SECCOMP_MODE_FILTER,
-			uintptr(unsafe.Pointer(fprog)), 0, 0)
+			uintptr(unsafe.Pointer(&fprog)), 0, 0)
 	} else {
 		_, _, err = unix.RawSyscall(unix.SYS_SECCOMP,
 			uintptr(C.C_SET_MODE_FILTER),
-			uintptr(flags), uintptr(unsafe.Pointer(fprog)))
+			uintptr(flags), uintptr(unsafe.Pointer(&fprog)))
 	}
+	runtime.KeepAlive(filter)
 	runtime.KeepAlive(fprog)
 	return
 }

@@ -126,24 +126,26 @@ func Annotations(labels []string) (bundle string, userAnnotations map[string]str
 
 // Like ioutil.TempFile but works inside a container context, depending on
 // kernel support.
-func RestrictedTempFile(pattern string) (_ *os.File, needsDelete bool, _ error) {
+func RestrictedTempFile(pattern string) (*os.File, error) {
 	// First try the "obvious" version to see if it works.
 	if fh, err := ioutil.TempFile("", pattern); err == nil {
-		return fh, true, nil
+		// Try to unlink the file.
+		_ = os.Remove(fh.Name())
+		return fh, nil
 	}
 
 	// Try to make a memfd to avoid hitting the filesystem.
 	if fd, err := unix.MemfdCreate(pattern, 0); err == nil {
-		return os.NewFile(uintptr(fd), "memfd:"+pattern), false, nil
+		return os.NewFile(uintptr(fd), "memfd:"+pattern), nil
 	}
 
 	// Try O_TMPFILE in ".".
 	if fh, err := os.OpenFile(".", unix.O_TMPFILE|os.O_RDWR, 0600); err == nil {
-		return fh, false, nil
+		return fh, nil
 	}
 
 	// Nothing left to try...
-	return nil, false, errors.New("could not create tmpfile")
+	return nil, errors.New("could not create tmpfile")
 }
 
 func GetIntSize() int {
