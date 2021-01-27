@@ -5,6 +5,7 @@ package patchbpf
 import (
 	"encoding/binary"
 	"io"
+	"io/ioutil"
 	"os"
 	"runtime"
 	"unsafe"
@@ -22,11 +23,15 @@ import (
 // #cgo pkg-config: libseccomp
 /*
 #include <errno.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <seccomp.h>
+
+#include <sys/prctl.h>
+#include <linux/filter.h>
 #include <linux/seccomp.h>
 
-const uint32_t C_ACT_ERRNO_ENOSYS = SCMP_ACT_ERRNO(ENOSYS);
+const uint32_t C_ACT_ERRNO_ENOSYS = SCMP_ACT_ERRNO(ENOANO);
 
 // Copied from <linux/seccomp.h>.
 
@@ -59,6 +64,14 @@ const uint32_t C_AUDIT_ARCH_PPC64        = AUDIT_ARCH_PPC64;
 const uint32_t C_AUDIT_ARCH_PPC64LE      = AUDIT_ARCH_PPC64LE;
 const uint32_t C_AUDIT_ARCH_S390         = AUDIT_ARCH_S390;
 const uint32_t C_AUDIT_ARCH_S390X        = AUDIT_ARCH_S390X;
+
+static int raw_seccomp_load(void *filter, int filter_len) {
+	struct sock_fprog fprog = {
+		.len =    filter_len / sizeof(struct sock_filter),
+		.filter = (struct sock_filter *) filter,
+	};
+	return prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &fprog);
+}
 */
 import "C"
 
@@ -594,12 +607,44 @@ func sysSeccompSetFilter(flags uint, filter []unix.SockFilter) (err error) {
 	return
 }
 
+func roundtripLoad(filter *libseccomp.ScmpFilter) error {
+	// Store the original BPF in some scratch space.
+	bpfFile, err := utils.RestrictedTempFile(".runc-seccomp-filter")
+	if err != nil {
+		return errors.Wrap(err, "creating scratch file")
+	}
+	defer bpfFile.Close()
+
+	if err := filter.ExportBPF(bpfFile); err != nil {
+		return errors.Wrap(err, "exporting BPF")
+	}
+	if _, err := bpfFile.Seek(0, os.SEEK_SET); err != nil {
+		return errors.Wrap(err, "seeking to start of BPF buffer")
+	}
+
+	data, err := ioutil.ReadAll(bpfFile)
+	if err != nil {
+		return errors.Wrap(err, "read bpfFile")
+	}
+
+	cData := C.CBytes(data)
+	defer C.free(cData)
+
+	n, err := C.raw_seccomp_load(cData, C.int(len(data)))
+	if n < 0 && err != nil {
+		return errors.Wrap(err, "load seccomp")
+	}
+	return nil
+}
+
 // PatchAndLoad takes a seccomp configuration and a libseccomp filter which has
 // been pre-configured with the set of rules in the seccomp config. It then
 // patches said filter to handle -ENOSYS in a much nicer manner than the
 // default libseccomp default action behaviour, and loads the patched filter
 // into the kernel for the current process.
 func PatchAndLoad(config *configs.Seccomp, filter *libseccomp.ScmpFilter) error {
+	return roundtripLoad(filter)
+
 	// Generate a patched filter.
 	fprog, err := enosysPatchFilter(config, filter)
 	if err != nil {
