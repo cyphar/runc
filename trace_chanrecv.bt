@@ -1,0 +1,30 @@
+#!/usr/bin/env bpftrace
+
+#define SP_OFFSET 0x8
+
+config = {
+	lazy_symbolication = 0;
+}
+
+uprobe:$1:runtime.chanrecv1
+{
+	$chan_key = (pid, reg("sp"));
+
+	@chan[arg0] = count();
+	@start[$chan_key] = (arg0, elapsed);
+	@[ustack] = count();
+}
+
+uretprobe:$1:runtime.chanrecv1
+/@start[pid,reg("sp") - SP_OFFSET].0/
+{
+	$chan_key = (pid, reg("sp") - SP_OFFSET);
+
+	@elapsed[pid,@start[$chan_key].0] = hist(elapsed - @start[$chan_key].1);
+	delete(@start, $chan_key);
+}
+
+END
+{
+	clear(@start);
+}

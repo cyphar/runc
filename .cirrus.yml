@@ -59,6 +59,10 @@ task:
       dnf -y install criu
     esac
 
+    # Install bpftrace.
+    curl -o /usr/local/bin/bpftrace -L https://github.com/bpftrace/bpftrace/releases/download/v0.23.5/bpftrace
+    chmod +x /usr/local/bin/bpftrace
+
     # Install Go.
     URL_PREFIX="https://go.dev/dl/"
     # Find out the latest minor release URL.
@@ -99,19 +103,31 @@ task:
     cat /proc/cpuinfo
   check_config_script: |
     /home/runc/script/check-config.sh
+  bpftrace_run_script: |
+    ssh -tt localhost "make -C /home/runc GO_BUILDMODE= runc"
+    nohup /home/runc/trace_chanrecv.bt --unsafe /home/runc/runc >bpftrace-total.txt &
+    echo "$!" >/tmp/bpftrace-pid
   unit_tests_script: |
-    ssh -tt localhost "make -C /home/runc localunittest"
+    ssh -tt localhost "make -C /home/runc GO_BUILDMODE= localunittest"
   integration_systemd_script: |
-    ssh -tt localhost "make -C /home/runc localintegration RUNC_USE_SYSTEMD=yes"
+    ssh -tt localhost "make -C /home/runc GO_BUILDMODE= localintegration RUNC_USE_SYSTEMD=yes"
   integration_fs_script: |
-    ssh -tt localhost "make -C /home/runc localintegration"
+    ssh -tt localhost "make -C /home/runc GO_BUILDMODE= localintegration"
   integration_systemd_rootless_script: |
     case $DISTRO in
       *-8)
         echo "SKIP: integration_systemd_rootless_script requires cgroup v2"
         ;;
       *)
-        ssh -tt localhost "make -C /home/runc localrootlessintegration RUNC_USE_SYSTEMD=yes"
+        ssh -tt localhost "make -C /home/runc GO_BUILDMODE= localrootlessintegration RUNC_USE_SYSTEMD=yes"
+        ;;
     esac
   integration_fs_rootless_script: |
-    ssh -tt localhost "make -C /home/runc localrootlessintegration"
+    ssh -tt localhost "make -C /home/runc GO_BUILDMODE= localrootlessintegration"
+  always:
+    cleanup_script: |
+      TRACE_PID="$(</tmp/bpftrace-pid)"
+      kill -INT "$TRACE_PID"
+      wait "$TRACE_PID"
+    bpftrace_output_artifacts:
+      path: bpftrace-*.txt
